@@ -84,17 +84,26 @@ WSGI_APPLICATION = 'authproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#      "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "device_iot_4",
+#         "USER": "postgres",
+#         "PASSWORD": "meet@9510",
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#     }
+# }
 DATABASES = {
      "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "device_iot_4",
+        "NAME": "railway",
         "USER": "postgres",
-        "PASSWORD": "meet@9510",
-        "HOST": "localhost",
+        "PASSWORD": "RKNIWzTNhSRdQaYNejyhxvSfEnSIOfPX",
+        "HOST": "postgres.railway.internal",
         "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
