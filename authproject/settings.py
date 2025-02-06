@@ -100,7 +100,7 @@ DATABASES = {
         "NAME": "railway",
         "USER": "postgres",
         "PASSWORD": "RKNIWzTNhSRdQaYNejyhxvSfEnSIOfPX",
-        "HOST": "postgres.railway.internal",
+        "HOST": "containers-us-west-123.railway.app",
         "PORT": "5432",
     }
 }
@@ -146,8 +146,14 @@ SIMPLE_JWT = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = os.path.join(BASE_DIR,'static'),
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Ensure this path exists
+]
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 
 # Default primary key field type
