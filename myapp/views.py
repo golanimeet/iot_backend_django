@@ -9,23 +9,21 @@ from .serializers import DeviceSerializer, SensorDataSerializer
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import threading, time
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import permission_classes
 from django.utils.timezone import now, timedelta
 from django.utils import timezone
-from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.template.loader import render_to_string
+import threading, time
 import logging
-
 
 logger = logging.getLogger(__name__)
 
-
+# Register, Login, Password Reset Request, Password Reset Confirm
 class RegisterView(APIView):
     def post(self, request):
         data = request.data
@@ -135,6 +133,7 @@ class PasswordResetConfirmView(APIView):
         logger.info("Password successfully reset for user %s", user.email)
         return Response({'detail': 'Password reset successful'}, status=status.HTTP_200_OK)
 
+
 # Device get and post data
 class DeviceListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -185,7 +184,7 @@ def generate_sensor_data(device):
         time.sleep(60)  # Wait for 1 minute
 
 
-@csrf_exempt
+@csrf_exempt  # Cross-Site Request Forgery use protection for a particular view
 def toggle_device_status(request, device_id):
     if request.method == 'POST':
         try:
@@ -194,7 +193,7 @@ def toggle_device_status(request, device_id):
                 device.status = 'Active'
                 device.save()
 
-                # Start background thread for generating sensor data
+                # Threads are typically used to handle multiple tasks
                 thread = threading.Thread(target=generate_sensor_data, args=(device,))
                 thread.daemon = True
                 thread.start()
@@ -233,18 +232,65 @@ class ReportDataView(APIView):
         except Device.DoesNotExist:
             return JsonResponse({'error': 'Device not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        
+
 class DashboardStatsView(APIView):
-    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access this view
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Filter by the logged-in user
+        device_name = request.query_params.get("device_name")
+        date_range = request.query_params.get("date_range")
+
+        # Filter total devices by logged-in user
         total_devices = Device.objects.filter(user=request.user).count()
         total_reports = SensorData.objects.filter(device__user=request.user).count()
 
+        # Initialize selected device stats
+        selected_device_id = 0
+        selected_device_value = 0
+
+        # Filter by device name
+        if device_name:
+            try:
+                device = Device.objects.get(name=device_name, user=request.user)
+                selected_device_id = device.id
+            except Device.DoesNotExist:
+                return Response({"error": "Device not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            filtered_data = SensorData.objects.filter(device=device)
+
+            # Filter by date range
+            if date_range == "daily":
+                start_date = now() - timedelta(days=1)
+            elif date_range == "weekly":
+                start_date = now() - timedelta(weeks=1)
+            elif date_range == "monthly":
+                start_date = now() - timedelta(days=30)
+            else:
+                start_date = None
+
+            if start_date:
+                filtered_data = filtered_data.filter(timestamp__gte=start_date)
+
+            selected_device_value = filtered_data.count()
+
         return Response({
             "totalDevices": total_devices,
-            "totalSensore": total_reports
+            "totalSensore": total_reports,
+            "selectedDeviceId": selected_device_id,
+            "selectedDeviceValue": selected_device_value
         }, status=status.HTTP_200_OK)
+    
 
+        
+# class DashboardStatsView(APIView):
+#     permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access this view
 
+#     def get(self, request):
+#         # Filter by the logged-in user
+#         total_devices = Device.objects.filter(user=request.user).count()
+#         total_reports = SensorData.objects.filter(device__user=request.user).count()
+
+#         return Response({
+#             "totalDevices": total_devices,
+#             "totalSensore": total_reports
+#         }, status=status.HTTP_200_OK)
