@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3&8p!zr7_dt5z#gpip4s^r2wwy7dl-qv@tbjunpfl=7w1#0#vq'
+# SECRET_KEY = 'django-insecure-3&8p!zr7_dt5z#gpip4s^r2wwy7dl-qv@tbjunpfl=7w1#0#vq'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ') 
 
 
 # Application definition
@@ -93,6 +96,12 @@ DATABASES = {
         "PORT": "5432",
     }
 }
+
+database_url = os.environ.get('DATABASE_URL')
+DATABASES['default'] = dj_database_url.parse(database_url)
+
+# deploy database url
+# postgresql://iot_django_db_user:PyQSgHIKPr2k2quxFyzy1vJfTZ4MRpyN@dpg-cvvs27idbo4c738fv5g0-a.oregon-postgres.render.com/iot_django_db
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
